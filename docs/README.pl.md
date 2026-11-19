@@ -23,7 +23,7 @@ lab_tf_data_dir="$(mktemp -d /tmp/aws-fgt-ai-lab.XXXXXX)" &&
 export TF_DATA_DIR="$lab_tf_data_dir"
 ```
 
-Używaj tej samej wartości `TF_DATA_DIR` w kolejnych poleceniach Terraform w bieżącej sesji. W nowej sesji CloudShell powtórz konfigurację katalogu i `terraform init`. Lokalny stan i zapisane plany są w katalogu repozytorium.
+Używaj tej samej wartości `TF_DATA_DIR` w kolejnych poleceniach Terraform w bieżącej sesji.
 
 Jeżeli wcześniejsza instalacja zakończyła się błędem `no space left on device`, a Terraform zgłasza teraz niezgodność sum kontrolnych, zwolnij miejsce zajęte przez niekompletną kopię. W katalogu repozytorium wykonaj:
 
@@ -46,6 +46,23 @@ Po sprawdzeniu planu zastosuj go:
 ```bash
 terraform apply lab.tfplan
 terraform output
+```
+
+### Wznów pracę w nowej sesji CloudShell
+
+Wróć do tego samego katalogu z klonem repozytorium. Zmienna `TF_DATA_DIR` obowiązywała tylko w poprzedniej sesji. Utwórz nowy katalog tymczasowy i zainicjalizuj Terraform:
+
+```bash
+lab_tf_data_dir="$(mktemp -d /tmp/aws-fgt-ai-lab.XXXXXX)" &&
+export TF_DATA_DIR="$lab_tf_data_dir" &&
+terraform init -input=false -lockfile=readonly
+```
+
+Plik `terraform.tfvars`, lokalny stan i zapisane plany pozostają w katalogu projektu. Jeśli sesja została przerwana podczas `terraform apply`, upewnij się, że poprzednie wykonanie się zakończyło. Wygeneruj i przejrzyj świeży plan przed zastosowaniem pozostałych zmian:
+
+```bash
+terraform plan -input=false -out=resume.tfplan &&
+terraform show -no-color resume.tfplan
 ```
 
 ## 2. Skonfiguruj FortiGate ręcznie
