@@ -38,11 +38,30 @@ cp terraform.tfvars.example terraform.tfvars
 
 In `terraform.tfvars`, set `fgt_key_name` and `admin_cidr` to your EC2 key-pair name and the IPv4 range you use to access FortiGate. An individual public IPv4 address uses a `/32`. Admin ingress is separate from the workload egress policies. If the default BYOL AMI is unavailable, set `fgt_ami_id` to a compatible FortiGate-VM BYOL AMI in the same region. By default Terraform looks up the current standard Amazon Linux 2023 x86_64 image. Set `workload_ami_id` to pin a specific compatible image.
 
+### Set up Terraform storage in AWS CloudShell
+
+CloudShell provides 1 GB of persistent home storage per Region. From the repository root, run this block before `terraform init` to install the AWS provider under `/tmp`.
+
 ```bash
-terraform init -input=false
-terraform fmt -check -recursive
-terraform validate
-terraform plan -input=false -out=lab.tfplan
+lab_tf_data_dir="$(mktemp -d /tmp/aws-fgt-ai-lab.XXXXXX)" &&
+export TF_DATA_DIR="$lab_tf_data_dir"
+```
+
+Use the same `TF_DATA_DIR` for subsequent Terraform commands in this shell. In a new CloudShell session, repeat the storage setup and `terraform init` before running Terraform again. The local state file and saved plans are stored in the repository directory.
+
+If an earlier install failed with `no space left on device` and Terraform now reports a checksum mismatch, reclaim the space used by the incomplete copy from the repository root:
+
+```bash
+rm -rf -- .terraform/providers/registry.terraform.io/hashicorp/aws/6.66.0/linux_amd64
+```
+
+Keep the committed `.terraform.lock.hcl`. Run initialization and planning:
+
+```bash
+terraform init -input=false -lockfile=readonly &&
+terraform fmt -check -recursive &&
+terraform validate &&
+terraform plan -input=false -out=lab.tfplan &&
 terraform show -no-color lab.tfplan
 ```
 
