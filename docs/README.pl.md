@@ -14,12 +14,36 @@ W katalogu projektu ustaw w `terraform.tfvars` nazwę klucza `fgt_key_name` oraz
 cp terraform.tfvars.example terraform.tfvars
 ```
 
+### Katalog roboczy Terraform w AWS CloudShell
+
+CloudShell udostępnia 1 GB trwałego miejsca w katalogu domowym na region. Przed `terraform init` wykonaj poniższy blok w głównym katalogu repozytorium, aby zainstalować provider AWS w `/tmp`.
+
 ```bash
-terraform init -input=false
-terraform fmt -check -recursive
-terraform validate
-terraform plan -input=false -out=lab.tfplan
+lab_tf_data_dir="$(mktemp -d /tmp/aws-fgt-ai-lab.XXXXXX)" &&
+export TF_DATA_DIR="$lab_tf_data_dir"
+```
+
+Używaj tej samej wartości `TF_DATA_DIR` w kolejnych poleceniach Terraform w bieżącej sesji. W nowej sesji CloudShell powtórz konfigurację katalogu i `terraform init`. Lokalny stan i zapisane plany są w katalogu repozytorium.
+
+Jeżeli wcześniejsza instalacja zakończyła się błędem `no space left on device`, a Terraform zgłasza teraz niezgodność sum kontrolnych, zwolnij miejsce zajęte przez niekompletną kopię. W katalogu repozytorium wykonaj:
+
+```bash
+rm -rf -- .terraform/providers/registry.terraform.io/hashicorp/aws/6.66.0/linux_amd64
+```
+
+Zachowaj plik `.terraform.lock.hcl` z repozytorium. Uruchom inicjalizację i zapisz plan:
+
+```bash
+terraform init -input=false -lockfile=readonly &&
+terraform fmt -check -recursive &&
+terraform validate &&
+terraform plan -input=false -out=lab.tfplan &&
 terraform show -no-color lab.tfplan
+```
+
+Po sprawdzeniu planu zastosuj go:
+
+```bash
 terraform apply lab.tfplan
 terraform output
 ```
