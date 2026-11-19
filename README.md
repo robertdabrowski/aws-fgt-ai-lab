@@ -47,7 +47,7 @@ lab_tf_data_dir="$(mktemp -d /tmp/aws-fgt-ai-lab.XXXXXX)" &&
 export TF_DATA_DIR="$lab_tf_data_dir"
 ```
 
-Use the same `TF_DATA_DIR` for subsequent Terraform commands in this shell. In a new CloudShell session, repeat the storage setup and `terraform init` before running Terraform again. The local state file and saved plans are stored in the repository directory.
+Use the same `TF_DATA_DIR` for subsequent Terraform commands in this shell.
 
 If an earlier install failed with `no space left on device` and Terraform now reports a checksum mismatch, reclaim the space used by the incomplete copy from the repository root:
 
@@ -70,6 +70,23 @@ Review the saved plan. It should create one FortiGate, four FortiGate ENIs, one 
 ```bash
 terraform apply lab.tfplan
 terraform output
+```
+
+### Resume in a new CloudShell session
+
+Return to the same repository checkout. The `TF_DATA_DIR` export was specific to the previous shell. Create a fresh temporary directory and initialize Terraform:
+
+```bash
+lab_tf_data_dir="$(mktemp -d /tmp/aws-fgt-ai-lab.XXXXXX)" &&
+export TF_DATA_DIR="$lab_tf_data_dir" &&
+terraform init -input=false -lockfile=readonly
+```
+
+Your `terraform.tfvars`, local state, and saved plans stay in the checkout. If you disconnected during `terraform apply`, confirm the previous apply has stopped, then generate and review a fresh plan before applying any remaining changes:
+
+```bash
+terraform plan -input=false -out=resume.tfplan &&
+terraform show -no-color resume.tfplan
 ```
 
 ### Verify the AWS path
