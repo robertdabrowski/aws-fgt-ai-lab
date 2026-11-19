@@ -1,0 +1,7 @@
+# Replace both values before running terraform plan.
+admin_cidr   = "203.0.113.10/32"
+fgt_key_name = "replace-with-your-ec2-key-pair"
+
+# Optional regional AMI overrides
+# fgt_ami_id      = "ami-0f87c9d117231cd4b"
+# workload_ami_id = "ami-..."

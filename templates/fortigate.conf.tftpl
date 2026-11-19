@@ -1,0 +1,43 @@
+config system global
+    set hostname aws-fgt-ai-lab
+    set admin-sport 443
+    set admin-ssh-port 22
+end
+config system interface
+%{ for subnet, port in ports ~}
+    edit "port${port.index + 1}"
+        set alias "${port.alias}"
+        set mode static
+        set ip ${cidrhost(subnets[subnet], 10)} ${cidrnetmask(subnets[subnet])}
+%{ if subnet == "wan" ~}
+        set allowaccess https ssh
+%{ else ~}
+        unset allowaccess
+%{ endif ~}
+    next
+%{ endfor ~}
+end
+config system dns
+    set primary ${dns_ip}
+    unset secondary
+    set protocol cleartext
+end
+config router static
+    edit 1
+        set dst 0.0.0.0 0.0.0.0
+        set gateway ${cidrhost(subnets["wan"], 1)}
+        set device "port1"
+    next
+    edit 2
+        set dst 169.254.169.254 255.255.255.255
+        set gateway ${cidrhost(subnets["wan"], 1)}
+        set device "port1"
+    next
+%{ for workload, subnet in workload_ports ~}
+    edit ${10 + ports[subnet].index}
+        set dst ${cidrhost(subnets[workload], 0)} ${cidrnetmask(subnets[workload])}
+        set gateway ${cidrhost(subnets[subnet], 1)}
+        set device "port${ports[subnet].index + 1}"
+    next
+%{ endfor ~}
+end
